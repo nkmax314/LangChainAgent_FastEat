@@ -1,4 +1,5 @@
-from typing import Any, dict
+import logging
+from typing import Any
 
 from dotenv import load_dotenv
 from langchain.agents import create_agent
@@ -6,12 +7,19 @@ from langchain.messages import HumanMessage
 from langchain.tools import tool
 from tavily import TavilyClient
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+)
+
 load_dotenv()
 tavily_client = TavilyClient()
 
 
 @tool
 def web_search(query: str) -> dict[str, Any]:
+    """tool for searching the web for information"""
+    logging.info(f"searching for {query}")
     return tavily_client.search(query)
 
 
@@ -23,13 +31,11 @@ def print_document(name: str) -> str:
 
 agent = create_agent(
     model="gpt-5-nano",
-    tools=[print_document],
-    system_prompt=" you are a teacher who want to use your\
-                        tools to generate the right document for your students",
+    tools=[web_search],
 )
 
 response = agent.invoke(
-    {"messages": [HumanMessage(content="HEllo I am a student and my name is Neeraj")]}
+    {"messages": [HumanMessage(content="give me the latest news of the day")]}
 )
 print("AI response")
 print(response["messages"][-1].content)
